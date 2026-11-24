@@ -10,6 +10,7 @@ import type { PluginInternal } from "../internal.js"
 import { foldSettings } from "./configured.js"
 import { activeCredential } from "./credential-settings.js"
 import { ProviderRefresh } from "./refresh.js"
+import { isLocalInferenceURL } from "../../effect/local-inference-policy.js"
 
 export type LocalModel = {
   readonly id: string
@@ -225,7 +226,7 @@ function configured(entries: readonly Entry[], providerID: string, origin: strin
   ).replace(/\/+$/, "")
   const apiKey = typeof settings?.apiKey === "string" ? settings.apiKey : undefined
   const explicit = typeof settings?.baseURL === "string"
-  if (!URL.canParse(baseURL)) return { baseURL, apiKey, explicit }
+  if (!isLocalInferenceURL(baseURL)) return { baseURL, apiKey, explicit }
   const url = new URL(baseURL)
   if (url.protocol !== "http:" && url.protocol !== "https:") return { baseURL, apiKey, explicit }
   const prefix = url.pathname.replace(/\/+$/, "").replace(suffix, "")

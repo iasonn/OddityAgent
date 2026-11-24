@@ -6,15 +6,31 @@ import { makeGlobalNode } from "@opencode/util/effect/app-node"
 import { httpClient } from "@opencode/util/effect/app-node-platform"
 import { ClientTls } from "#client-tls"
 import { WebSocketConstructor } from "./websocket-constructor.js"
+import { isLocalInferenceURL } from "./local-inference-policy.js"
 
 // Bun's fetch ends a request after five quiet minutes, before provider routes' own header and chunk timeouts.
+const localInferenceOnly = Layer.effect(
+  HttpClient.HttpClient,
+  Effect.gen(function* () {
+    const client = yield* HttpClient.HttpClient
+    return HttpClient.transform(client, (effect, request) => {
+      if (!isLocalInferenceURL(request.url)) {
+        return Effect.fail(new HttpClientError.HttpClientError({
+          reason: new HttpClientError.TransportError({ request, description: "OddityAgent: public inference endpoint blocked" }),
+        }))
+      }
+      return effect
+    })
+  }),
+)
+
 const withoutBunTimeout = Layer.effect(
   HttpClient.HttpClient,
   Effect.gen(function* () {
     const client = yield* HttpClient.HttpClient
     return HttpClient.transformResponse(
       client,
-      Effect.provideService(FetchHttpClient.RequestInit, { timeout: false } as BunFetchRequestInit),
+      Effect.provideService(FetchHttpClient.RequestInit, { timeout: false, redirect: "error" } as BunFetchRequestInit),
     )
   }),
 )
@@ -56,7 +72,7 @@ const withClientCertificate = Layer.effect(
 
 export const requestExecutor = makeGlobalNode({
   service: RequestExecutor.Service,
-  layer: RequestExecutor.layer.pipe(Layer.provide(withoutBunTimeout), Layer.provide(withClientCertificate)),
+  layer: RequestExecutor.layer.pipe(Layer.provide(withoutBunTimeout), Layer.provide(withClientCertificate), Layer.provide(localInferenceOnly)),
   deps: [httpClient],
 })
 

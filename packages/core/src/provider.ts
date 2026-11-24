@@ -15,6 +15,7 @@ import { IntegrationConnection } from "./integration/connection.js"
 import { Credential } from "@opencode/schema/credential"
 import { Location } from "./location.js"
 import { freeze } from "immer"
+import { localProviderIDs } from "./effect/local-inference-policy.js"
 import { AISDKNative } from "./aisdk-native.js"
 
 export { AISDK_PREFIX, aisdk, isAISDK, mergeHeaders, mergeOverlay, packageName } from "./aisdk-native.js"
@@ -471,6 +472,7 @@ const layer = Layer.effect(
         if (revision !== integrations.revision() || records !== state.get()) continue
         const byID = new Map(connections.map((integration) => [integration.id, integration]))
         const available = Array.from(records.values()).filter((record) => {
+          if (!localProviderIDs.has(record.provider.id)) return false
           if (record.provider.activation === "disabled") return false
           const integration = byID.get(record.provider.integrationID ?? Integration.ID.make(record.provider.id))
           // Never combine the previous account's discovered endpoints/models with a new connection.
