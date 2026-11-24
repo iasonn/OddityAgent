@@ -1,0 +1,7 @@
+# TonkerCad training integration
+
+Use TonkerCad's existing MCP server, not a duplicate geometry engine. Open TonkerCad, enable Settings > Claude > Let Claude use TonkerCad, and copy the desktop setup. Translate the command, args and env to the v2 local MCP schema shown in opencode.example.json. Use absolute paths and keep secrets out of Git. Merge only the relevant keys into your OddityAgent config; do not overwrite existing configuration. Install the skill under your local project's .opencode/skills/tonkercad-production/SKILL.md or your global skill directory. Set codemode false so native tool results can be evaluated for image support.
+
+Run the journal tests with python3 -m unittest discover -s training/tonkercad -p 'test_*.py'. Record evidence using journal.py record evidence.json; inspect the candidate before manually invoking journal.py review RUN_ID accepted "assessment". Search previous accepted examples with journal.py search "task". Export accepted text/script pairs with journal.py export > accepted.jsonl. The export is a starting dataset, not a fine-tuned model or a multimodal trainer. Keep evidence and exported data outside public Git. Do not let the agent self-approve a production run.
+
+Smoke test: MCP tools/list; get_scene; get_script_reference; create a named disposable training design; run a dimensioned script; inspect screenshots and scene; check printability; review and journal. Disconnect Strata and confirm no cloud fallback. Actual app and model acceptance tests remain required.

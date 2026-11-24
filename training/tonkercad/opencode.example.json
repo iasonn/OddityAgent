@@ -1,0 +1,17 @@
+{
+  "update": "disable",
+  "share": "disabled",
+  "mcp": {
+    "servers": {
+      "tonkercad": {
+        "type": "local",
+        "command": [
+          "/absolute/path/to/node",
+          "/absolute/path/to/Tinker/electron/mcp-server.cjs"
+        ],
+        "codemode": false,
+        "protocol": "legacy"
+      }
+    }
+  }
+}
