@@ -42,7 +42,9 @@ export const ModelsDevPlugin = define({
     const flags = yield* Flag.Service
     const get = Effect.flatMap(config.entries(), (entries) => {
       const resolved = flags.resolve(entries)
-      return modelsDev.get(resolved.recommended_api.enabled, resolved.model_speeds.enabled)
+      return modelsDev.get(resolved.recommended_api.enabled, resolved.model_speeds.enabled).pipe(
+        Effect.map((catalog) => catalog.filter((provider) => ["strata", "ollama", "lmstudio", "vllm"].includes(provider.info.id))),
+      )
     })
     // Filtering and definition indexes are shared across Locations. Only Model materialization
     // makes mutable copies, after provider configuration and access have been resolved.

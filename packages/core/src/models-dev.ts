@@ -714,7 +714,7 @@ export const layer = (options?: Options) =>
       )
 
       const source = options?.url || defaultSource
-      const fetch = options?.fetch ?? true
+      const fetch = options?.fetch ?? false
       const userAgent = App.useragent(app)
       const key = cacheKey(source)
       const metaKey = `${key}:meta`
@@ -831,6 +831,7 @@ export const layer = (options?: Options) =>
       const get = (recommended = false, speeds = false) => caches[Number(recommended) * 2 + Number(speeds)][0]
 
       const refresh = Effect.fn("ModelsDev.refresh")(function* (force = false) {
+        if (!fetch) return
         yield* lock
           .withPermit(
             Effect.gen(function* () {
