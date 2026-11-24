@@ -4,6 +4,7 @@ import { HttpProxyAgent } from "http-proxy-agent"
 import { HttpsProxyAgent } from "https-proxy-agent"
 import { Layer } from "effect"
 import { Socket } from "effect/socket"
+import { isLocalInferenceURL } from "./local-inference-policy.js"
 
 interface WebSocketOptions extends Socket.WebSocketClientOptions {
   readonly protocols?: string | Array<string>
@@ -56,8 +57,9 @@ const proxyAgent = (url: string, selectedProxy: string | undefined) => {
 }
 
 const layer = Layer.succeed(Socket.WebSocketConstructor, (url, input) => {
+  if (!isLocalInferenceURL(url)) throw new Error("OddityAgent: public WebSocket endpoint blocked")
   const config = constructorOptions(input)
-  const selectedProxy = proxy(url)
+  const selectedProxy = undefined
   // Keep trust on the runtime store so NODE_EXTRA_CA_CERTS remains additive.
   if (typeof Bun !== "undefined") {
     // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Bun extends the browser constructor with handshake and network options.

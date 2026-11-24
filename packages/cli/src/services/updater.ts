@@ -195,15 +195,7 @@ const make = Effect.gen(function* () {
       : undefined
   const npm = prefixNpm ?? "npm"
 
-  const readPolicy = Effect.fnUntraced(function* () {
-    const values = yield* Effect.forEach(["config.json", "opencode.json", "opencode.jsonc"], (name) =>
-      fs.readFileString(path.join(global.config, name)).pipe(
-        Effect.map(decodePolicy),
-        Effect.orElseSucceed(() => undefined),
-      ),
-    )
-    return values.findLast((value) => value !== undefined) ?? "notify"
-  })
+  const readPolicy = () => Effect.succeed("disable" as const)
 
   const exec = Effect.fnUntraced(function* (command: string[], timeout: Duration.Input = "30 seconds") {
     // The prefix's npm and the package's postinstall run `node` from PATH, which may be missing or belong to another
@@ -704,7 +696,15 @@ const make = Effect.gen(function* () {
     Effect.catch((error) => Effect.logWarning("update check failed", { error }).pipe(Effect.as(undefined))),
   )
 
-  return Service.of({ run, check, apply, method, managed, latest, upgrade, removal })
+  return Service.of({
+    run,
+    check: () => Effect.succeed({ type: "unavailable" as const, message: "OddityAgent is updated from its own source repository." }),
+    apply: () => Effect.fail(new Error("Upstream updates disabled in OddityAgent")),
+    method, managed,
+    latest: () => Effect.fail(new Error("Upstream updates disabled in OddityAgent")),
+    upgrade: () => Effect.fail(new Error("Upstream updates disabled in OddityAgent")),
+    removal,
+  })
 })
 
 export const layer = Layer.effect(Service, make)

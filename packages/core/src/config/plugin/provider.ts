@@ -11,6 +11,7 @@ import { Config } from "../../config.js"
 import { Model } from "../../model.js"
 import { Provider } from "../../provider.js"
 import { Variant } from "../../variant.js"
+import { isLocalInferenceURL, localProviderIDs } from "../../effect/local-inference-policy.js"
 import { ConfigIntegration } from "../integration.js"
 import { ConfigEntryObserver } from "./entry-observer.js"
 
@@ -147,6 +148,8 @@ function configuredProviders(entries: readonly Entry[]) {
   return entries
     .filter((entry): entry is Document => entry.type === "document" && !(entry instanceof ConfigIntegration.Document))
     .flatMap((file) => Object.entries(file.info.providers ?? {}))
+    .filter(([id, item]) => localProviderIDs.has(id) &&
+      (item.settings?.baseURL === undefined || (typeof item.settings.baseURL === "string" && isLocalInferenceURL(item.settings.baseURL))))
 }
 
 /**

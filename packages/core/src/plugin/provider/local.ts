@@ -1,7 +1,7 @@
 import { define } from "@opencode/plugin/effect/plugin"
 import type { Entry } from "@opencode/schema/config"
 import { Duration, Effect, FiberSet, Option, Schedule, type Schema, Semaphore, Stream } from "effect"
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
 import photonWasm from "#photon-wasm"
 import { Config } from "../../config.js"
 import { Environment } from "../../environment/index.js"
@@ -47,7 +47,10 @@ export function createLocalProviderPlugin<Discovered>(input: {
     return define({
       id: input.id,
       effect: Effect.fn(function* (ctx) {
-        const http = HttpClient.filterStatusOk(yield* HttpClient.HttpClient)
+        const http = HttpClient.filterStatusOk(HttpClient.transformResponse(
+          yield* HttpClient.HttpClient,
+          Effect.provideService(FetchHttpClient.RequestInit, { redirect: "error" }),
+        ))
         const config = yield* Config.Service
         const environment = yield* Effect.serviceOption(Environment.Service)
         const remote = Option.isSome(environment) && !environment.value.hostsServer
